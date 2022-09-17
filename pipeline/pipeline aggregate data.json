@@ -19,7 +19,10 @@
 						"referenceName": "Dataflow Aggregate Data",
 						"type": "DataFlowReference",
 						"parameters": {
-							"dataflow_param_fiscalyear": "0"
+							"dataflow_param_fiscalyear": {
+								"value": "@pipeline().parameters.pl_param_custid",
+								"type": "Expression"
+							}
 						}
 					},
 					"staging": {
@@ -37,6 +40,12 @@
 				}
 			}
 		],
+		"parameters": {
+			"pl_param_custid": {
+				"type": "int",
+				"defaultValue": 0
+			}
+		},
 		"annotations": []
 	}
 }
