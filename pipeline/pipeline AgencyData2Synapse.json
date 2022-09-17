@@ -1,5 +1,5 @@
 {
-	"name": "pipeline AgencyData2Synapse_copy1",
+	"name": "pipeline AgencyData2Synapse",
 	"properties": {
 		"activities": [
 			{
