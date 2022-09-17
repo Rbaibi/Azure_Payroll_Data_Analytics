@@ -9,14 +9,22 @@
 						"referenceName": "nycpayroll_2020",
 						"type": "DatasetReference"
 					},
-					"name": "Payroll2021"
+					"name": "Payroll2020"
 				},
 				{
-					"name": "Payroll2020"
+					"dataset": {
+						"referenceName": "nycpayroll_2021",
+						"type": "DatasetReference"
+					},
+					"name": "Payroll2021"
 				}
 			],
 			"sinks": [
 				{
+					"dataset": {
+						"referenceName": "syn_NYC_Payroll_Summary",
+						"type": "DatasetReference"
+					},
 					"name": "sink1"
 				}
 			],
@@ -29,14 +37,14 @@
 				},
 				{
 					"name": "derivedColumn1"
-				},
-				{
-					"name": "aggregate1"
 				}
 			],
 			"scriptLines": [
+				"parameters{",
+				"     dataflow_param_fiscalyear as integer (0)",
+				"}",
 				"source(output(",
-				"          FiscalYear as string,",
+				"          FiscalYear as integer,",
 				"          PayrollNumber as string,",
 				"          AgencyID as string,",
 				"          AgencyName as string,",
@@ -51,24 +59,63 @@
 				"          BaseSalary as string,",
 				"          PayBasis as string,",
 				"          RegularHours as string,",
-				"          RegularGrossPaid as string,",
+				"          RegularGrossPaid as float,",
 				"          OTHours as string,",
-				"          TotalOTPaid as string,",
-				"          TotalOtherPay as string",
+				"          TotalOTPaid as float,",
+				"          TotalOtherPay as float",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> Payroll2020",
+				"source(output(",
+				"          FiscalYear as integer,",
+				"          PayrollNumber as string,",
+				"          AgencyCode as string,",
+				"          AgencyName as string,",
+				"          EmployeeID as string,",
+				"          LastName as string,",
+				"          FirstName as string,",
+				"          AgencyStartDate as string,",
+				"          WorkLocationBorough as string,",
+				"          TitleCode as string,",
+				"          TitleDescription as string,",
+				"          LeaveStatusasofJune30 as string,",
+				"          BaseSalary as string,",
+				"          PayBasis as string,",
+				"          RegularHours as string,",
+				"          RegularGrossPaid as float,",
+				"          OTHours as string,",
+				"          TotalOTPaid as float,",
+				"          TotalOtherPay as float",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> Payroll2021",
-				"source(allowSchemaDrift: true,",
-				"     validateSchema: false) ~> Payroll2020",
-				"Payroll2021, Payroll2020 union(byName: true)~> union1",
-				"union1 filter(ERROR_FUNCTION('')) ~> filter1",
-				"filter1 derive() ~> derivedColumn1",
-				"derivedColumn1 aggregate() ~> aggregate1",
-				"aggregate1 sink(allowSchemaDrift: true,",
+				"Payroll2020, Payroll2021 union(byName: false)~> union1",
+				"union1 filter(toInteger(FiscalYear) >= $dataflow_param_fiscalyear ) ~> filter1",
+				"filter1 derive(Totalpaid = RegularGrossPaid + TotalOTPaid+TotalOtherPay) ~> derivedColumn1",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     input(",
+				"          FiscalYear as integer,",
+				"          AgencyName as string,",
+				"          TotalPaid as double",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     staged: true,",
+				"     allowCopyCommand: true,",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> sink1"
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          FiscalYear,",
+				"          AgencyName,",
+				"          TotalPaid = Totalpaid",
+				"     )) ~> sink1"
 			]
 		}
 	}
